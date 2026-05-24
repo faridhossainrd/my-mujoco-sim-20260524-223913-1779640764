@@ -138,8 +138,25 @@ export class MuJoCoDemo {
       [this.model, this.data, this.bodies, this.lights] =
         await loadSceneFromURL(mujoco, initialScene, this);
 
+      // ── Salute activity ──────────────────────────────────────────────────
+      this.salute = new SaluteActivity(this.model, this.data, {
+        raiseDuration : 1.2,
+        holdDuration  : 2.0,
+        lowerDuration : 1.0,
+      });
+
       this.gui = new GUI();
       setupGUI(this);
+
+      // Salute GUI panel
+      const saluteFolder = this.gui.addFolder('🫡 Salute');
+      const saluteParams = { salute: () => {
+        if (this.salute && !this.salute.isActive) {
+          this.salute.start(() => console.log('[Salute] done callback fired'));
+        }
+      }};
+      saluteFolder.add(saluteParams, 'salute').name('▶  Do Salute');
+      saluteFolder.open();
     } catch (e) {
       console.error("[MuJoCo] Failed to initialize:", e);
       loadingDiv.style.color = '#ff4444';
@@ -197,6 +214,11 @@ export class MuJoCoDemo {
           if (this.data.ctrl.length > 1) {
             this.data.ctrl[1] = 0;
           }
+        }
+
+        // ── Salute activity update ───────────────────────────────────────────
+        if (this.salute && this.params["scene"] === "unitree_g1.xml") {
+          this.salute.update(timestep);
         }
 
         // Jitter the control state with gaussian random noise
